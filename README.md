@@ -1,4 +1,4 @@
-# Telecom customer churn: leakage-resistant classification
+# Telecom Churn Prediction & Explainability
 
 An end-to-end sklearn study with schema validation, seven baseline/hyperparameter candidates, train-only preprocessing, validation-selected threshold, held-out evaluation, explainability and a Streamlit dashboard.
 
