@@ -2,22 +2,15 @@
 
 An end-to-end sklearn study with schema validation, seven baseline/hyperparameter candidates, train-only preprocessing, validation-selected threshold, held-out evaluation, explainability and a Streamlit dashboard.
 
-## Research question and methodology
-IBM Telco Customer Churn: 7,043 customers, target Yes/No. Stratified 60/20/20 train/validation/test splitting, seed 42. Customer ID excluded; blank TotalCharges becomes missing and train-median-imputed. One-hot unknown-safe categories, numeric standardization. Compare prior dummy, logistic C={0.1,1}, random forests depth={6,12}, and gradient boosting depth={1,2}. Select model by validation average precision, then threshold by validation F1. Do not refit on validation data, avoiding a changed probability scale after threshold selection. Test is evaluated once after these decisions. Permutation importance uses validation only. Logistic SHAP/log-odds explanations are explicitly separate from the selected model.
+[![CI](https://github.com/ayanirfan099/telecom-customer-churn-prediction-and-analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/ayanirfan099/telecom-customer-churn-prediction-and-analysis/actions/workflows/ci.yml) ![Python 3.12 CI](https://img.shields.io/badge/Python-3.12_CI-3776AB) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-```mermaid
-flowchart LR
-    A[Validated data] --> B[Reproducible preprocessing]
-    B --> C[Models and baselines]
-    C --> D[Held-out evaluation]
-    D --> E[Metrics and analysis]
-```
+![Held-out IBM Telco churn confusion matrix at the validation-selected threshold](results/telco/confusion.png)
+
 
 ## Executed results
 Executed on the real upstream CSV, SHA256 `16320c9c1ec72448db59aa0a26a0b95401046bef5d02fd3aeb906448e3055e91`. Selected `boost_depth1`, threshold 0.35. Holdout n=1409: accuracy 0.7800, F1 0.6344, ROC-AUC 0.8447, average precision 0.6666, Brier 0.1361. Logistic SHAP executed. Full comparison, calibration, confusion matrix, error-by-contract and contributions: [metrics](results/telco/metrics.json).
 
 ![Calibration](results/telco/calibration.png)
-![Confusion matrix](results/telco/confusion.png)
 
 ## Reproduce
 From this repository root:
@@ -29,6 +22,23 @@ streamlit run src/churn/app.py
 pytest -q
 ruff check .
 ruff format --check .
+```
+
+## Using the threshold for a retention decision
+
+The recorded 0.35 threshold was selected on validation F1. Lowering a threshold generally increases the number of customers flagged and can improve recall while increasing false positives; raising it can reduce outreach volume while missing more churners. F1 does not encode outreach cost or the benefit of a successful intervention. Choose a policy against an explicit capacity/cost objective on validation data, then evaluate once on held-out data. This observational classifier does not predict who will benefit from an intervention.
+
+## Research question and methodology
+IBM Telco Customer Churn: 7,043 customers, target Yes/No. Stratified 60/20/20 train/validation/test splitting, seed 42. Customer ID excluded; blank TotalCharges becomes missing and train-median-imputed. One-hot unknown-safe categories, numeric standardization. Compare prior dummy, logistic C={0.1,1}, random forests depth={6,12}, and gradient boosting depth={1,2}. Select model by validation average precision, then threshold by validation F1. Do not refit on validation data, avoiding a changed probability scale after threshold selection. Test is evaluated once after these decisions. Permutation importance uses validation only. Logistic SHAP/log-odds explanations are explicitly separate from the selected model.
+
+```mermaid
+flowchart LR
+    Data[IBM Telco CSV] --> Split[Stratified train / validation / test]
+    Split --> Prep[Train-fitted preprocessing]
+    Prep --> Candidates[Seven classifier candidates]
+    Candidates --> Select[Validation AP selects model]
+    Select --> Threshold[Validation F1 selects threshold]
+    Threshold --> Test[Single held-out evaluation]
 ```
 
 ## Implementation and review
